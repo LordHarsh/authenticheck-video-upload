@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎥 Creative Video Recorder 🎬</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-200">
+    <header class="bg-blue-600 text-white py-4">
+        <h1 class="text-2xl font-bold pl-8">Authenticheck</h1>
+    </header>
+    <main class="flex justify-center items-center h-screen">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg">
+            <h1 id="welcomeMessage" class="text-2xl font-bold mb-4">Welcome</h1>
+            <video id="videoPreview" autoplay class="w-full rounded-lg mb-4"></video>
+            <div id="timer" class="text-lg mb-2 font-extrabold">00:00</div>
+            <div class="text-sm italic mb-2">Please repeat the following line and record the video:</div>
+            <div id="phrase" class="text-base italic mb-4 font-bold">"The quick brown fox jumps over the lazy dog."</div>
+            <div class="flex justify-center space-x-2">
+                <button id="startRecording" class="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg">🔴 Start Recording</button>
+                <button id="stopRecording" class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg" disabled>⏹️ Stop Recording</button>
+                <button id="uploadRecording" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg" disabled>⬆️ Upload Video</button>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const name = urlParams.get('name') || 'Guest';
+        <!-- document.getElementById('welcomeMessage').textContent = `Welcome ${name}`; -->
+
+        const videoPreview = document.getElementById("videoPreview");
+        const startRecordingButton = document.getElementById("startRecording");
+        const stopRecordingButton = document.getElementById("stopRecording");
+        const uploadRecordingButton = document.getElementById("uploadRecording");
+        const timerElement = document.getElementById("timer");
+
+        let mediaRecorder;
+        let recordedBlobs = [];
+        let startTime;
+        let timerInterval;
+
+        startRecordingButton.addEventListener("click", startRecording);
+        stopRecordingButton.addEventListener("click", stopRecording);
+        uploadRecordingButton.addEventListener("click", uploadRecording);
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+
+                videoPreview.srcObject = stream;
+                mediaRecorder = new MediaRecorder(stream);
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data && event.data.size > 0) {
+                        recordedBlobs.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    clearInterval(timerInterval);
+                    uploadRecordingButton.disabled = false;
+                    console.log("Recording stopped, ready to upload");
+                };
+
+                mediaRecorder.start();
+                startRecordingButton.disabled = true;
+                stopRecordingButton.disabled = false;
+                startTime = Date.now();
+                timerInterval = setInterval(updateTimer, 1000);
+                console.log("Recording started");
+            } catch (error) {
+                console.error("Error starting recording:", error);
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === "recording") {
+                mediaRecorder.stop();
+                startRecordingButton.disabled = false;
+                stopRecordingButton.disabled = true;
+                console.log("Recording stopped");
+            }
+        }
+
+        async function uploadRecording() {
+            const videoBlob = new Blob(recordedBlobs, { type: "video/webm" });
+            const formData = new FormData();
+            formData.append('file', videoBlob, `${name}.webm`);
+            formData.append('name', name);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    alert('Video uploaded successfully!');
+                    console.log("Video uploaded successfully");
+                } else {
+                    alert('Video upload failed.');
+                    console.error("Video upload failed");
+                }
+            } catch (error) {
+                console.error('Error uploading video:', error);
+                alert('Video upload failed.');
+            }
+
+            uploadRecordingButton.disabled = true;
+        }
+
+        function updateTimer() {
+            const elapsedTime = Date.now() - startTime;
+            const seconds = Math.floor((elapsedTime / 1000) % 60);
+            const minutes = Math.floor((elapsedTime / (1000 * 60)) % 60);
+
+            timerElement.textContent = `${pad(minutes)}:${pad(seconds)}`;
+        }
+
+        function pad(number) {
+            return number.toString().padStart(2, '0');
+        }
+    </script>
+</body>
+</html>
