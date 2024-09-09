@@ -27,8 +27,9 @@ async def upload_video(file: UploadFile = File(...), name: str = Form(...)):
             shutil.copyfileobj(file.file, buffer)
 
         # Upload the file to S3
-        presigned_url = generate_presigned_url(file.filename, name)
+        presigned_url = generate_presigned_url(name, file.filename)
         if presigned_url:
+            print(presigned_url)
             upload_to_s3(presigned_url, file_path)
             os.remove(file_path)  # Clean up the local file
         else:
