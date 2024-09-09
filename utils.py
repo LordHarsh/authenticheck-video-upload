@@ -10,7 +10,7 @@ def generate_presigned_url(file_name, folder_name):
     function_url = 'https://nyludtz4f7mjhemwui4zst2etq0zjcqi.lambda-url.ap-south-1.on.aws/'
     try:
         # Make GET request to Lambda function URL to get pre-signed URL
-        response = requests.get(function_url, params={'folder': folder_name, 'filename': file_name})
+        response = requests.get(function_url, params={'folder': "verification video", 'filename': file_name})
         response.raise_for_status()  # Raise error for bad response status
 
         # Extract pre-signed URL from response
