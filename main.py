@@ -63,11 +63,6 @@ def update_interviewee(interviewee_id):
         return False
 
 @app.get("/record/", response_class=HTMLResponse)
-async def redirect_record_page(request: Request):
-    # Manually redirect trailing slash to the non-trailing version
-    name = request.query_params.get('name', 'Guest')
-    return RedirectResponse(url=f"/record?name={name}")
-
 @app.get("/record", response_class=HTMLResponse)
 async def get_record_page(request: Request):
     name = request.query_params.get('name', 'Guest')
