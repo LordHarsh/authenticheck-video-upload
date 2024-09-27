@@ -4,6 +4,11 @@ import shutil
 import os
 import requests
 import json
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.routing import APIRouter
+from starlette.responses import RedirectResponse
+
 
 app = FastAPI()
 
@@ -57,6 +62,12 @@ def update_interviewee(interviewee_id):
         print(f"Error updating interviewee: {e}")
         return False
 
+@app.get("/record/", response_class=HTMLResponse)
+async def redirect_record_page(request: Request):
+    # Manually redirect trailing slash to the non-trailing version
+    name = request.query_params.get('name', 'Guest')
+    return RedirectResponse(url=f"/record?name={name}")
+
 @app.get("/record", response_class=HTMLResponse)
 async def get_record_page(request: Request):
     name = request.query_params.get('name', 'Guest')
@@ -67,11 +78,14 @@ async def get_record_page(request: Request):
         return HTMLResponse(content=f"<h1>Error loading page: {e}</h1>", status_code=500)
     return HTMLResponse(content=html_content, status_code=200)
 
+
 @app.post("/upload")
 async def upload_video(file: UploadFile = File(...), name: str = Form(...)):
     upload_dir = "uploaded_videos"
     os.makedirs(upload_dir, exist_ok=True)
-    sanitized_filename = os.path.basename(file.filename)
+
+    # Use 'name' for the filename instead of the uploaded file's original name
+    sanitized_filename = f"{name}.webm"  # Using name from form as the filename
     file_path = os.path.join(upload_dir, sanitized_filename)
 
     try:
