@@ -47,7 +47,7 @@ def upload_to_s3(presigned_url, file_path):
         return False
 
 def update_interviewee(interviewee_id, file_name, s3_url):
-    update_url = 'http://192.168.1.20:3005/interviewee/update_interviewee'
+    update_url = 'https://authenticheck-backend.onrender.com/interviewee/update_interviewee'
     headers = {'Content-Type': 'application/json'}
     payload = {
         'interviewee_id': interviewee_id,
