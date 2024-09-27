@@ -43,7 +43,7 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const name = urlParams.get('name') || 'Guest';
-        <!-- document.getElementById('welcomeMessage').textContent = `Welcome ${name}`; -->
+
 
         const videoPreview = document.getElementById("videoPreview");
         const startRecordingButton = document.getElementById("startRecording");
@@ -114,8 +114,12 @@
         async function uploadRecording() {
             const videoBlob = new Blob(recordedBlobs, { type: "video/webm" });
             const formData = new FormData();
+
+            // Using 'name' from the query string for the file name
             formData.append('file', videoBlob, `${name}.webm`);
-            formData.append('name', name);
+            formData.append('name', name);  // Sending the 'name' as part of the form
+
+            console.log(`Uploading video for name: ${name}`);
 
             try {
                 const response = await fetch('/upload', {
@@ -127,8 +131,9 @@
                     alert('Video uploaded successfully!');
                     console.log("Video uploaded successfully");
                 } else {
-                    alert('Video upload failed.');
-                    console.error("Video upload failed");
+                    const errorData = await response.json();
+                    alert(`Video upload failed: ${errorData.error}`);
+                    console.error("Video upload failed:", errorData);
                 }
             } catch (error) {
                 console.error('Error uploading video:', error);
